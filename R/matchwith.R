@@ -1,18 +1,78 @@
 #' Patern Matching for R
 #'
-#' @param ... the first (actual) argument is
-#' @name match_with
-#' @exmaples
-#' fib <- function(n)
+#' @description Only supported those functionalities
+#' \itemize{
+#'  \item Constatnt Pattern
+#'  \item Cons Pattern (x::xs)
+#'  \item List Pattern (Emulate Tuple Pattern)
+#'  \item Wildcard Pattern
+#' }
+#'
+#' There are three Wildcard Symbol, '.', '_', and `otherwise'.
+#' You can use one of them in the bottom part of arguments of 'match_with'.
+#' @param ... The first (actual) argument of ... is
+#'
+#' @examples
+#' # f <- function(expr) {
+#' #   match_with(expr
+#' #   , pattern_1 -> res_1
+#' #   , pattern_2 -> res_2
+#' #
+#' #   , pattern_n -> res_n
+#' #   , . -> res_otherwise
+#' #   )
+#' # }
+#'
+#' fib <- function(n) {
 #'   match_with(n
 #'   , 0 -> 0
 #'   , 1 -> 1
 #'   , . -> fib(n - 1) + fib(n - 2)
 #'   )
+#' }
 #' fib(10)
-NULL
-
-#' @rdname match_with
+#'
+#' fizzbuzz <- function(z) {
+#'   match_with(list(z %% 5, z %% 3)
+#'   , list(0, 0) -> "FizzBuzz"
+#'   , list(0, .) -> "Fizz"
+#'   , list(., 0) -> "Buzz"
+#'   , otherwise  -> as.character(z)
+#'   )
+#' }
+#' sapply(1:30, fizzbuzz)
+#'
+#' # compare with Haskell's definition
+#' # https://wiki.haskell.org/Fold
+#' # Note:
+#' # If lst is R's list (VECSXP), `length(lst) == 0` can be replaced with `list()`.
+#' # If lst is R's integer vector (INTSXP), `length(lst) == 0` can be replaced with `integer(0)`.
+#' # If lst is R's numeric vector (REALSXP), `length(lst) == 0` can be replaced with `numeric(0)`.
+#' foldr <- function(f, init, lst) {
+#'   match_with(lst
+#'   , length(lst) == 0 -> init
+#'   , x::xs            -> f(x, foldr(f, init, xs))
+#'   )
+#' }
+#'
+#' foldl <- function(f, init, lst) {
+#'   match_with(lst
+#'   , length(lst) == 0 -> init
+#'   , x::xs            -> foldl(f, f(init, x), xs)
+#'   )
+#' }
+#' foldr(function(x, y) paste0("(", x, "+", y, ")"), "0", as.character(1:13))
+#' foldl(function(x, y) paste0("(", x, "+", y, ")"), "0", as.character(1:13))
+#'
+#' len <- function(xs) {
+#'   match_with(xs
+#'   , length(xs) == 0 -> 0
+#'   , y::ys           -> 1 + len(ys)
+#'   )
+#' }
+#' len(c(10, 11, 12))
+#' len(list(10, 11, 12))
+#'
 #' @export
 match_with <- function(...) {
   dots <- as.vector(substitute((...)), "list")[-1]
