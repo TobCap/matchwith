@@ -3,15 +3,15 @@ context("foldlr")
 test_that("foldlr", {
   foldr <- function(f, init, lst) {
     match_with(lst
-               , length(lst) == 0 -> init
-               , x::xs            -> f(x, foldr(f, init, xs))
+    , length(lst) == 0 -> init
+    , x::xs            -> f(x, foldr(f, init, xs))
     )
   }
 
   foldl <- function(f, init, lst) {
     match_with(lst
-               , length(lst) == 0 -> init
-               , x::xs            -> foldl(f, f(init, x), xs)
+    , length(lst) == 0 -> init
+    , x::xs            -> foldl(f, f(init, x), xs)
     )
   }
 
