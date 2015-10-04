@@ -2,10 +2,10 @@
 #'
 #' @description Only supported those functionalities
 #' \itemize{
-#'  \item Constatnt Pattern
+#'  \item Constatnt Pattern (like 1, "1", NULL as R's atomic expression)
 #'  \item Cons Pattern (x::xs)
-#'  \item List Pattern (Emulate Tuple Pattern)
-#'  \item Wildcard Pattern
+#'  \item Tuple Pattern (VECSXP pattern in R)
+#'  \item Wildcard Pattern (., _, otherwise)
 #' }
 #'
 #' There are three Wildcard Symbol, '.', '_', and `otherwise'.
@@ -13,13 +13,14 @@
 #' @param ... The first (actual) argument of ... is
 #'
 #' @examples
+#' # Syntax
 #' # f <- function(expr) {
 #' #   match_with(expr
 #' #   , pattern_1 -> res_1
 #' #   , pattern_2 -> res_2
-#' #
+#' #   .
+#' #   .
 #' #   , pattern_n -> res_n
-#' #   , . -> res_otherwise
 #' #   )
 #' # }
 #'
