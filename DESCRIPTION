@@ -6,6 +6,10 @@ Authors@R: person("tob", "", email = "tobakucapitalism@gmail.com",
   role = c("aut", "cre"))
 Description: Emulate Pattern Matching of Haskell and OCaml
 License: MIT + file LICENSE
-Suggests: testthat, knitr, rmarkdown
+Suggests:
+    testthat,
+    knitr,
+    rmarkdown
 VignetteBuilder: knitr
 LazyData: TRUE
+RoxygenNote: 5.0.1

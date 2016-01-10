@@ -1,8 +1,10 @@
 #' Patern Matching for R
 #'
-#' @description Only supported those functionalities
+#' Just like Hakell's "case of" or OCaml's "match with" but not support guard syntax.
+#' @description Only supported those functionalities. Guard is still under consideration, not yet implemented.
 #' \itemize{
 #'  \item Constatnt Pattern (like 1, "1", NULL as R's atomic expression)
+#'  \item Variable Pattern (just a symbol: x)
 #'  \item Cons Pattern (x::xs)
 #'  \item Tuple Pattern (VECSXP pattern in R)
 #'  \item Wildcard Pattern (., _, otherwise)
@@ -11,15 +13,14 @@
 #' There are three Wildcard Symbol, '.', '_', and `otherwise'.
 #' You can use one of them in the bottom part of arguments of 'match_with'.
 #' @param ... The first (actual) argument of ... is
-#'
+#' @name match_with
 #' @examples
 #' # Syntax
 #' # f <- function(expr) {
 #' #   match_with(expr
 #' #   , pattern_1 -> res_1
 #' #   , pattern_2 -> res_2
-#' #   .
-#' #   .
+#' #              ...
 #' #   , pattern_n -> res_n
 #' #   )
 #' # }
@@ -73,18 +74,11 @@
 #' }
 #' len(c(10, 11, 12))
 #' len(list(10, 11, 12))
-#'
-#' @export
-match_with <- function(...) {
-  dots <- as.vector(substitute((...)), "list")[-1]
-  conds <- dots[-1]
-  parent_frame <- parent.frame()
-  expr <- dots[[1]]
-  expr_value <- eval(expr, parent_frame)
-  expr_name <- names(dots[1])
-  # expr_value_deparse <- parse(text = deparse(expr_value))[[1]]
-  delayedAssign("expr_value_deparse", parse(text = deparse(expr_value))[[1]])
+NULL
 
+#' @rdname match_with
+#' @export
+match_with <- (function() {
   wildcards <- c(quote(.), quote(`_`), quote(otherwise))
   wildcards_char <- lapply(wildcards, as.character)
 
@@ -105,15 +99,16 @@ match_with <- function(...) {
     # c2 may have wildcard symbol
     out_fun <- function(c1, c2) {
       ## When using `==`, symbols are coerced into character by
-      ## deparse() in C lang level (See R source's relop.c#80-81)
+      ## PRINTNAME(x) in C lang level (See next source code:
+      ## https://github.com/wch/r-source/blob/trunk/src/main/relop.c#L185 )
       ## and comparison between a symbol and list of symbols may
-      ## mistake in a special situation: quote(`_`) == list(quote(`_`), "_")
+      ## mistake in a special situation: quote(`_`) == list(quote(`_`), "_").
       ## The result in above is c(FALSE, TRUE).
-      c2_is_wildcard <-
+      c2_has_wildcard <-
         !is.null(wildcard) && is.symbol(c2) &&
         (as.character(c2) %in% wildcards_char)
 
-      if (c2_is_wildcard) TRUE
+      if (c2_has_wildcard) TRUE
       else if (length(c1) != length(c2)) FALSE
       else if (length(c1) == 0) identical(c1, c2)
       else if (length(c1) == 1) {
@@ -129,58 +124,139 @@ match_with <- function(...) {
     out_fun(c1, c2)
   }
 
-  for(i in seq_along(conds)) {
-    statement <- conds[[i]]
+  # extract_patterns
 
-    if (missing(statement))
-      stop("need to remove the last comma")
+  check_matched <- function(expr_info, parent_frame, l_expr, r_expr) {
+    l_expr_len <- length(l_expr)
+    has_wildcard <- has_wc(l_expr)
+    cons_pattern <- l_expr_len == 3 && l_expr[[1]] == "::"
 
-    if (statement[[1]] != quote(`<-`))
-      stop("use `->` as converter")
-
-    cond_expr <- statement[[3]]
-    cond_is_atomic <- is.atomic(cond_expr)
-    cond_vars <- if (cond_is_atomic) "" else all.vars(cond_expr)
-    is_wildcard <- length(cond_expr) == 1 && any(wildcards_char %in% cond_vars)
-
-    if (is_wildcard && i != length(conds)) {
-      stop("wildcard must be last part of arguments") }
-
-    has_wildcard_in_expr <- any(wildcards_char %in% cond_vars)
-    has_double_colon <- length(cond_expr) == 3 && quote(`::`) == cond_expr[[1]]
-
-    symbol_is_referred <- is.symbol(expr) &&
-      (as.character(expr) %in% cond_vars) && !has_wildcard_in_expr
-
-    name_is_referred <- !is.null(expr_name) &&
-      (expr_name %in% cond_vars) && !has_wildcard_in_expr
-
-    eval_arg_2nd <-
-      if (has_double_colon) {
-        `names<-`(
-          list(expr_value[[1]], expr_value[-1]),
-          list(as.character(cond_expr[[2]]), as.character(cond_expr[[3]])) ) }
-    else if (name_is_referred) {
-      `names<-`(list(expr_value), list(expr_name)) }
-    else NULL
-
-    ans <- eval(statement[[2]], envir = eval_arg_2nd, enclos = parent_frame)
-
-    #
-    if (is_wildcard || has_double_colon) {
-      return(ans) } # `wildcard`, x::xs
-    else if ((symbol_is_referred || name_is_referred) && eval(cond_expr, eval_arg_2nd, parent_frame)) {
-      return(ans) } # is.null(x), x %% 2 == 0
-    else if (cond_is_atomic && equals_recursive(expr_value, cond_expr)) {
-      return(ans) } # 1, "", NULL
-    else if (!cond_is_atomic && !has_double_colon && !has_wildcard_in_expr && equals_recursive(expr_value, eval(cond_expr, parent_frame))) {
-      return(ans) } # list(1,2), numeric(0)
-    else if (!cond_is_atomic && has_wildcard_in_expr && equals_recursive(expr_value_deparse, cond_expr, wildcard = wildcards)) {
-      return(ans) } # list(1,.),
-    else {
-      # not matched in this loop
+    if (l_expr_len == 1 && is.atomic(l_expr)) { # Constant Pattern
+      if (equals_recursive(l_expr, expr_info$value)) {
+        list(is_matched = TRUE, matched_value = eval(r_expr, parent_frame))
+      } else {
+        list(is_matched = FALSE, matched_value = quote(Nothing))
+      }
+    } else if (l_expr_len == 1 && is.symbol(l_expr)) { # Variable Pattern or Wildcard Pattern
+      if (has_wildcard) {
+        list(is_matched = TRUE, matched_value = eval(r_expr, parent_frame))
+     } else {
+        list(is_matched = TRUE, matched_value = eval(r_expr, setNames(list(expr_info$value), as.character(l_expr)), parent_frame))
+      }
+    } else if (cons_pattern) {
+      if (is.symbol(l_expr[[2]]) && is.symbol(l_expr[[3]]))  {
+        list(is_matched = TRUE, matched_value = match_hdtl(expr_info$value, l_expr, r_expr, parent_frame))
+      } else {
+        stop("pattern of `x::xs` is only acceptable. `x::y::yss` is not supported")
+      }
+    } else if (l_expr_len > 1 && # integer(0) shold be matched hear?
+               equals_recursive(expr_info$value_deparse(), l_expr, if (has_wildcard) wildcards else NULL)) {
+      # tuple pattern
+      list(is_matched = TRUE, matched_value = eval(r_expr, parent_frame))
+    } else if (isTRUE(eval(l_expr, parent_frame))) {
+      # Guard for test
+      list(is_matched = TRUE, matched_value = eval(r_expr, parent_frame))
+    } else{
+      #print("last if")
+      list(is_matched = FALSE, matched_value = quote(Nothing))
     }
   }
-  stop("The input is non-matched pattern. Need to write proper
-          syntax or set default wildcard `.` at last.")
-}
+
+  match_hdtl <- function(expr_value, l_expr, r_expr, env_) {
+    lst <- `names<-`(
+      list(expr_value[[1]], expr_value[-1]),
+      list(as.character(l_expr[[2]]), as.character(l_expr[[3]]))
+    )
+    eval(r_expr, lst, env_)
+  }
+  # not exported
+
+  has_wc <- function(call_) {
+    any(all.vars(call_) %in% wildcards_char)
+  }
+
+  ## main
+  function(...) {
+    dots <- as.vector(substitute((...)), "list")[-1]
+    conds <- dots[-1]
+    parent_frame <- parent.frame()
+    expr <- dots[[1]]
+    expr_value <- eval(expr, parent_frame)
+    expr_name <- names(dots[1])
+    expr_value_deparse <- parse(text = deparse(expr_value))[[1]]
+    delayedAssign("expr_value_deparse", parse(text = deparse(expr_value))[[1]])
+
+    expr_info <- list(expr = expr, value = expr_value, name = expr_name, value_deparse = function() expr_value_deparse)
+
+    for (i in seq_along(conds)) {
+      statement <- conds[[i]]
+      if (missing(statement))
+        stop("need to remove the last comma")
+
+      if (statement[[1]] != quote(`<-`))
+        stop("use `->` as converter")
+
+      l_expr <- statement[[3]]
+      r_expr <- statement[[2]]
+
+      ans_info <- check_matched(expr_info, parent_frame, l_expr, r_expr)
+
+      if (ans_info$is_matched) {
+        return(ans_info$matched_value)
+      }
+
+      # pattern_atomic <- is.atomic(l_expr)
+      # pattern_cons <- length(l_expr) == 3 && l_expr[[1]] == "::"
+      # pattern_tuple <- length(l_expr) > 1 && l_expr[[1]] == "list"
+      # pattern_wc <- length(l_expr) == 1 && any(wildcards_char %in% cond_vars)
+      # cond_vars <- if (pattern_atomic) "" else all.vars(l_expr)
+      # is_wildcard <- length(l_expr) == 1 && any(wildcards_char %in% cond_vars)
+      #
+      # if (is_wildcard && i != length(conds)) {
+      #   stop("wildcard must be last part of arguments") }
+      #
+      # has_wildcard_in_expr <- any(wildcards_char %in% cond_vars)
+      #
+      # symbol_is_referred <- is.symbol(expr) &&
+      #   (as.character(expr) %in% cond_vars) && !has_wildcard_in_expr
+      #
+      # name_is_referred <- !is.null(expr_name) &&
+      #   (expr_name %in% cond_vars) && !has_wildcard_in_expr
+      #
+      # eval_arg_2nd <-
+      #   if (pattern_cons) {
+      #     `names<-`(
+      #       list(expr_value[[1]], expr_value[-1]),
+      #       list(as.character(l_expr[[2]]), as.character(l_expr[[3]]))
+      #     ) }
+      #   else if (name_is_referred) {
+      #     `names<-`(list(expr_value), list(expr_name)) }
+      #   else if (!pattern_atomic && l_expr[[1]] == "list" && !has_wildcard_in_expr) {
+      #     # list(0, x) list(y, x)
+      #     NULL }
+      #   else {
+      #     NULL }
+      #
+      # ans <- eval(statement[[2]], envir = eval_arg_2nd, enclos = parent_frame)
+      #
+      # #
+      # if (is_wildcard || pattern_cons) {
+      #   return(ans) } # `wildcard`, x::xs
+      # else if ((symbol_is_referred || name_is_referred) && eval(l_expr, eval_arg_2nd, parent_frame)) {
+      #   return(ans) } # is.null(x), x %% 2 == 0
+      # else if (pattern_atomic && equals_recursive(expr_value, l_expr)) {
+      #   return(ans) } # 1, "", NULL
+      # else if (!pattern_atomic && !pattern_cons && !has_wildcard_in_expr && equals_recursive(expr_value, eval(l_expr, parent_frame))) {
+      #   return(ans) } # list(1,2), numeric(0)
+      # else if (!pattern_atomic && has_wildcard_in_expr && equals_recursive(expr_value_deparse, l_expr, wildcard = wildcards)) {
+      #   return(ans) } # list(1,.),
+      # else if (!pattern_atomic && l_expr[[1]] == "list")
+      #   # # list(x, y)
+      # else {
+      #   # not matched in this loop
+      # }
+    }
+    stop("The input is non-matched pattern. Need to write proper
+            syntax or set default wildcard `.` at last.")
+  }
+})()
