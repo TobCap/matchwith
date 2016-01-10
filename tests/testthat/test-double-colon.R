@@ -13,7 +13,6 @@ test_that("double-colon", {
     , x::xs -> x + sum2(xs)
     )
 
-
   add1 <- function(ys)
     match_with(ys
     , integer(0) -> integer(0)
