@@ -95,6 +95,7 @@ match_with <- (function() {
 
     # return list(is_matched = , new_list = )
     if (l_expr_len == 0) {
+      # NULL pattern
       list(is_matched = identical(l_expr, expr_info$value), new_list = NULL)
     } else if (l_expr_len == 1) {
        # Constant Pattern, Wildcard Pattern, or kind of a guard clauses.
@@ -173,11 +174,11 @@ match_with <- (function() {
     parent_frame <- parent.frame()
     expr <- dots[[1]]
     expr_value <- eval(expr, parent_frame)
-    expr_name <- names(dots[1])
-    expr_value_deparse <- parse(text = deparse(expr_value))[[1]]
+    # expr_name <- names(dots[1])
+    # expr_value_deparse <- parse(text = deparse(expr_value))[[1]]
     delayedAssign("expr_value_deparse", parse(text = deparse(expr_value))[[1]])
 
-    expr_info <- list(expr = expr, value = expr_value, name = expr_name, value_deparse = function() expr_value_deparse)
+    expr_info <- list(expr = expr, value = expr_value, value_deparse = function() expr_value_deparse)
 
     for (i in seq_along(conds)) {
       statement <- conds[[i]]
