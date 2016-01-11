@@ -7,15 +7,14 @@
 match_with(...)
 }
 \arguments{
-\item{...}{The first (actual) argument of ... is}
+\item{...}{The first (actual) argument of ... is trying to match following patterns.}
 }
 \description{
-Only supported those functionalities. Guard is still under consideration, not yet implemented.
+Only supported those functionalities. Guard is still under consideration, not yet completely implemented.
 \itemize{
  \item Constatnt Pattern (like 1, "1", NULL as R's atomic expression)
- \item Variable Pattern (just a symbol: x)
  \item Cons Pattern (x::xs)
- \item Tuple Pattern (VECSXP pattern in R)
+ \item Tuple Pattern with matching symbols (VECSXP pattern in R)
  \item Wildcard Pattern (., _, otherwise)
 }
 
@@ -46,7 +45,7 @@ fib <- function(n) {
 fib(10)
 
 fizzbuzz <- function(z) {
-  match_with(list(z \%\% 5, z \%\% 3)
+  match_with(list(z \%\% 3, z \%\% 5)
   , list(0, 0) -> "FizzBuzz"
   , list(0, .) -> "Fizz"
   , list(., 0) -> "Buzz"

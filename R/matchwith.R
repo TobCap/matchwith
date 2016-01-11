@@ -1,18 +1,18 @@
 #' Patern Matching for R
 #'
 #' Just like Hakell's "case of" or OCaml's "match with" but not support guard syntax.
-#' @description Only supported those functionalities. Guard is still under consideration, not yet implemented.
+#' @description Only supports those functionalities. Guard is still under consideration, not yet completely implemented.
 #' \itemize{
 #'  \item Constatnt Pattern (like 1, "1", NULL as R's atomic expression)
-#'  \item Variable Pattern (just a symbol: x)
 #'  \item Cons Pattern (x::xs)
-#'  \item Tuple Pattern (VECSXP pattern in R)
+#'  \item Tuple Pattern with matching symbols (VECSXP is used instead of Tuple)
 #'  \item Wildcard Pattern (., _, otherwise)
+#'  \item Guard clauses (when using one of getGroupMembers("Compare"), any, all, identical, and isTRUE)
 #' }
 #'
 #' There are three Wildcard Symbol, '.', '_', and `otherwise'.
 #' You can use one of them in the bottom part of arguments of 'match_with'.
-#' @param ... The first (actual) argument of ... is
+#' @param ... The first (actual) argument of ... is trying to match following patterns.
 #' @name match_with
 #' @examples
 #' # Syntax
@@ -35,7 +35,7 @@
 #' fib(10)
 #'
 #' fizzbuzz <- function(z) {
-#'   match_with(list(z %% 5, z %% 3)
+#'   match_with(list(z %% 3, z %% 5)
 #'   , list(0, 0) -> "FizzBuzz"
 #'   , list(0, .) -> "Fizz"
 #'   , list(., 0) -> "Buzz"
