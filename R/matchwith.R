@@ -142,18 +142,19 @@ match_with <- (function() {
   }
   # not exported
 
-  match_var <- function(l_expr, expr_orig, acc = list()) {
+  match_var <- function(l_expr, expr_orig, check_assign = TRUE, acc = list()) {
     # returns list of a result of matched and pairs of symbol and value
     if (is.symbol(l_expr))
       if (has_wc(l_expr)) list(TRUE, acc)
       else if (identical(l_expr, expr_orig)) list(TRUE, acc)
-      else list(TRUE, c(setNames(list(expr_orig), as.character(l_expr)), acc))
+      else if (check_assign) list(TRUE, c(setNames(list(expr_orig), as.character(l_expr)), acc))
+      else list(FALSE, NULL)
     else if (length(l_expr) != length(expr_orig)) list(FALSE, NULL)
     else if (length(l_expr) == 0) list(isTRUE(identical(l_expr, expr_orig)), acc) # for list(), NULL
     else if (is.atomic(l_expr)) list(isTRUE(l_expr == expr_orig), acc) # absorbs difference of numeric and integer
     else if (is.recursive(l_expr) && is.recursive(expr_orig)) {
-      hd <- match_var(l_expr[[1]], expr_orig[[1]], acc)
-      tl <- match_var(as.list(l_expr[-1]), as.list(expr_orig[-1]), acc)
+      hd <- match_var(l_expr[[1]], expr_orig[[1]], check_assign, acc)
+      tl <- match_var(as.list(l_expr[-1]), as.list(expr_orig[-1]), check_assign, acc)
       list(hd[[1]] && tl[[1]], c(hd[[2]], tl[[2]])) }
     else list(FALSE, NULL)
   }
