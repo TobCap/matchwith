@@ -10,12 +10,13 @@ match_with(...)
 \item{...}{The first (actual) argument of ... is trying to match following patterns.}
 }
 \description{
-Only supported those functionalities. Guard is still under consideration, not yet completely implemented.
+Only supports those functionalities. Guard is still under consideration, not yet completely implemented.
 \itemize{
  \item Constatnt Pattern (like 1, "1", NULL as R's atomic expression)
  \item Cons Pattern (x::xs)
- \item Tuple Pattern with matching symbols (VECSXP pattern in R)
+ \item Tuple Pattern with matching symbols (VECSXP is used instead of Tuple)
  \item Wildcard Pattern (., _, otherwise)
+ \item Guard clauses (when using one of getGroupMembers("Compare"), `!`, any, all, identical, and isTRUE)
 }
 
 There are three Wildcard Symbol, '.', '_', and `otherwise'.
@@ -60,6 +61,8 @@ sapply(1:30, fizzbuzz)
 # If lst is R's list (VECSXP), `length(lst) == 0` can be replaced with `list()`.
 # If lst is R's integer vector (INTSXP), `length(lst) == 0` can be replaced with `integer(0)`.
 # If lst is R's numeric vector (REALSXP), `length(lst) == 0` can be replaced with `numeric(0)`.
+
+\dontrun{
 foldr <- function(f, init, lst) {
   match_with(lst
   , length(lst) == 0 -> init
@@ -84,5 +87,6 @@ len <- function(xs) {
 }
 len(c(10, 11, 12))
 len(list(10, 11, 12))
+}
 }
 

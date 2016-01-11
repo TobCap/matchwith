@@ -7,7 +7,7 @@
 #'  \item Cons Pattern (x::xs)
 #'  \item Tuple Pattern with matching symbols (VECSXP is used instead of Tuple)
 #'  \item Wildcard Pattern (., _, otherwise)
-#'  \item Guard clauses (when using one of getGroupMembers("Compare"), any, all, identical, and isTRUE)
+#'  \item Guard clauses (when using one of getGroupMembers("Compare"), `!`, any, all, identical, and isTRUE)
 #' }
 #'
 #' There are three Wildcard Symbol, '.', '_', and `otherwise'.
@@ -50,6 +50,8 @@
 #' # If lst is R's list (VECSXP), `length(lst) == 0` can be replaced with `list()`.
 #' # If lst is R's integer vector (INTSXP), `length(lst) == 0` can be replaced with `integer(0)`.
 #' # If lst is R's numeric vector (REALSXP), `length(lst) == 0` can be replaced with `numeric(0)`.
+#'
+#' \dontrun{
 #' foldr <- function(f, init, lst) {
 #'   match_with(lst
 #'   , length(lst) == 0 -> init
@@ -74,6 +76,7 @@
 #' }
 #' len(c(10, 11, 12))
 #' len(list(10, 11, 12))
+#' }
 NULL
 
 #' @rdname match_with
@@ -127,9 +130,9 @@ match_with <- (function() {
       } else {
         list(is_matched = FALSE, new_list = NULL)
       }
-    } else if ({.m <- match_var(l_expr, expr_info$value_deparse()); .m[[1]]}) {
+    } else if ({.m <- match_var(l_expr, expr_info$value_deparse(), check_assign = identical(l_expr[[1]], quote(list))); .m[[1]]}) {
       list(is_matched = TRUE, new_list = .m[[2]])
-    } else {
+   } else {
       list(is_matched = FALSE, new_list = NULL)
     }
   }
