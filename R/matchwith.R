@@ -98,9 +98,10 @@ match_with <- (function() {
     cons_pattern <- l_expr_len == 3 && l_expr[[1]] == "::"
     all_vars_mod <- setdiff(all.vars(l_expr), wildcards_char)
 
-    # return list(is_matched = , new_list = )
+    # return list(is_matched = LGLSXP, new_list = VECSXP)
     if (l_expr_len == 0) {
-      # NULL pattern
+      # must be NULL pattern
+      # list(is_matched = is.null(expr_info$value), new_list = NULL)
       list(is_matched = identical(l_expr, expr_info$value), new_list = NULL)
     } else if (l_expr_len == 1) {
        # Constant Pattern, Wildcard Pattern, or kind of a guard clauses.
@@ -119,7 +120,7 @@ match_with <- (function() {
       } else {
         # should be a call object of length one, i.e. x(), and it must return a boolean object.
         if (isTRUE(eval(l_expr, parent_frame))) {
-          list(is_matched = TRUE, new_list = setNames(list(expr_info$value), as.character(l_expr)))
+          list(is_matched = TRUE, new_list = NULL)
         } else {
           list(is_matched = FALSE, new_list = NULL)
         }
