@@ -82,9 +82,14 @@ NULL
 #' @rdname match_with
 #' @export
 match_with <- (function() {
-  wildcards <- c(quote(.), quote(`_`), quote(otherwise))
+  wildcards <- list(quote(.), quote(`_`), quote(otherwise))
   wildcards_char <- lapply(wildcards, as.character)
-  bool_funs <- c("!", "==", "!=", "<", "<=", ">=", ">", "any", "all", "identical", "isTRUE")
+  bool_funs <- c(
+    "!", "any", "all", "identical", "isTRUE",
+    getGroupMembers("Compare"),
+    ls(pattern = "^is\\.", envir = baseenv())
+    )
+  not_matched <- list(is_matched = FALSE, new_list = NULL)
 
    # extract_patterns
   check_matched <- function(expr_info, parent_frame, l_expr, r_expr) {
