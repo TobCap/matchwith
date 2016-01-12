@@ -41,7 +41,7 @@ Usage
 Const pattern
 =============
 
-`pattern_i` consists with an atomic object with less than one length, such as numeric, literal, NA, NULL. When x is matched with `pattern_i`, `res_i` (the right side of expression) is evalueted in the parent.frame . In the exampe below, when x is 0 or 1, the right side expression is evalated and returned. when x is more than 2, wildcard simbol is matched and `fib(x-1) + fib(x-2)` is evaluated and returned.
+`pattern_i` represents numeric literal, charater literal, or NULL. When x is matched with `pattern_i`, `res_i` (the right side of expression) is evalueted in the parent.frame . In the exampe below, when x is 0 or 1, the right side expression is evalated and returned. when x is more than 2, wildcard simbol is matched and `fib(x-1) + fib(x-2)` is evaluated and returned.
 
 ``` r
 fib <- function(x)
@@ -145,19 +145,19 @@ ex2(c(1L,2L,3L))
 Guard clauses
 =============
 
-when `pattern_i` uses `Compare` family (and adding `!`, `any`, `and`, `identity`, `isTRUE`) as top of node of language object, it is regarded as guard clauses, and when the result of evaluating `pattern_i` is TRUE, `res_i` will be evaluated and returned.
+when `pattern_i` uses `Compare` family (or `!`, `any`, `all`, `identity`, `isTRUE`) or a function whose name starts with `is.` as top of node of language object, it is regarded as guard clauses, and when the result of evaluating `pattern_i` is TRUE, `res_i` will be evaluated and returned.
 
 ``` r
 ex3 <- function(x)
   match_with(x
   , x > 5 -> x * 100
-  , x > 3 -> x * 10
+  , x < 3 -> x * 10
   , . -> -x
   )
 sapply(1:10, ex3)
-#>  [1]   -1   -2   -3   40   50  600  700  800  900 1000
+#>  [1]   10   20   -3   -4   -5  600  700  800  900 1000
 
-# isTRUE(1:10 > 5) -> FALSE, isTRUE(1:10 > 3) -> FALSE, 
+# isTRUE(x > 5) -> FALSE, isTRUE(x < 2) -> FALSE, 
 # so only wildcard is matched and returns `-x`
 ex3(1:10) 
 #>  [1]  -1  -2  -3  -4  -5  -6  -7  -8  -9 -10
