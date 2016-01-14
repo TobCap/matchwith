@@ -34,5 +34,4 @@ test_that("List(Tuple) Pattern", {
   expect_identical(l2(list(1)), -1)
   expect_identical(l2(list(1,2,3)), -1)
   expect_identical(l2(c(1)), -1)
-
 })
