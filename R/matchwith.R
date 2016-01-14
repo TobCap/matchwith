@@ -118,8 +118,8 @@ match_with <- (function() {
           list(is_matched = TRUE, new_list = setNames(list(expr_info$value), as.character(l_expr)))
         }
       } else {
-        # should be a call object of length one, i.e. x(), and it must return a boolean object.
-        if (isTRUE(eval(l_expr, parent_frame))) {
+        # should be list()
+        if (identical(l_expr, expr_info$value_deparse())) {
           list(is_matched = TRUE, new_list = NULL)
         } else {
           list(is_matched = FALSE, new_list = NULL)
@@ -160,7 +160,7 @@ match_with <- (function() {
       else if (check_assign) list(TRUE, c(setNames(list(expr_orig), as.character(l_expr)), acc))
       else list(FALSE, NULL)
     else if (length(l_expr) != length(expr_orig)) list(FALSE, NULL)
-    else if (length(l_expr) == 0) list(isTRUE(identical(l_expr, expr_orig)), acc) # for list(), NULL
+    else if (length(l_expr) == 0) list(identical(l_expr, expr_orig), acc) # for list(), NULL
     else if (is.atomic(l_expr)) list(isTRUE(l_expr == expr_orig), acc) # absorbs difference of numeric and integer
     else if (is.recursive(l_expr) && is.recursive(expr_orig)) {
       hd <- match_var(l_expr[[1]], expr_orig[[1]], check_assign, acc)
