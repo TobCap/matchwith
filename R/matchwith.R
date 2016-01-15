@@ -87,6 +87,7 @@ match_with <- (function() {
   bool_funs <- c(
     "!", "any", "all", "identical", "isTRUE",
     getGroupMembers("Compare"),
+    getGroupMembers("Logic"), # for warning
     ls(pattern = "^is\\.", envir = baseenv())
     )
   not_matched <- list(is_matched = FALSE, new_list = NULL)
@@ -104,8 +105,12 @@ match_with <- (function() {
       } else {
         stop("pattern of `x::xs` is only acceptable. `x::y::ys` is not supported")
       }
-    } else if (any(as.character(l_expr[[1]]) %in% bool_funs)) {
-      if (isTRUE(eval(l_expr, parent_frame))) {
+    } else if (is_guard) {
+      if (as.character(l_expr[[1]]) %in% c("|", "&")) {
+        warning("`&` or `|` require to use all() or any()", domain = NA)
+      }
+
+      if (eval(l_expr, parent_frame)) {
         list(is_matched = TRUE, new_list = NULL)
       } else {
         list(is_matched = FALSE, new_list = NULL)
