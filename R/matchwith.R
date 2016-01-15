@@ -94,38 +94,11 @@ match_with <- (function() {
    # extract_patterns
   check_matched <- function(expr_info, parent_frame, l_expr, r_expr) {
     l_expr_len <- length(l_expr)
-    has_wildcard <- has_wc(l_expr)
     cons_pattern <- l_expr_len == 3 && l_expr[[1]] == "::"
-    all_vars_mod <- setdiff(all.vars(l_expr), wildcards_char)
+    is_guard <- l_expr_len > 1 && any(as.character(l_expr[[1]]) %in% bool_funs)
 
     # return list(is_matched = LGLSXP, new_list = VECSXP)
-    if (l_expr_len == 0) {
-      # must be NULL pattern
-      # list(is_matched = is.null(expr_info$value), new_list = NULL)
-      list(is_matched = identical(l_expr, expr_info$value), new_list = NULL)
-    } else if (l_expr_len == 1) {
-       # Constant Pattern, Wildcard Pattern, or kind of a guard clauses.
-      if (is.atomic(l_expr)) {
-        if (isTRUE(l_expr == expr_info$value)) {
-          list(is_matched = TRUE, new_list = NULL)
-        } else {
-          list(is_matched = FALSE, new_list = NULL)
-        }
-      } else if (is.symbol(l_expr)) { # Variable Pattern or Wildcard Pattern
-        if (has_wildcard) {
-          list(is_matched = TRUE, new_list = NULL)
-        } else {
-          list(is_matched = TRUE, new_list = setNames(list(expr_info$value), as.character(l_expr)))
-        }
-      } else {
-        # should be list()
-        if (identical(l_expr, expr_info$value_deparse())) {
-          list(is_matched = TRUE, new_list = NULL)
-        } else {
-          list(is_matched = FALSE, new_list = NULL)
-        }
-      }
-    } else if (cons_pattern) {
+    if (cons_pattern) {
       if (is.symbol(l_expr[[2]]) && is.symbol(l_expr[[3]]))  {
         list(is_matched = TRUE, new_list = match_hdtl(expr_info$value, l_expr, r_expr))
       } else {
@@ -137,7 +110,7 @@ match_with <- (function() {
       } else {
         list(is_matched = FALSE, new_list = NULL)
       }
-    } else if ({.m <- match_var(l_expr, expr_info$value_deparse(), check_assign = identical(l_expr[[1]], quote(list))); .m[[1]]}) {
+    } else if ({.m <- match_var(l_expr, expr_info$value_deparse()); .m[[1]]}) {
       list(is_matched = TRUE, new_list = .m[[2]])
    } else {
       list(is_matched = FALSE, new_list = NULL)
@@ -152,19 +125,19 @@ match_with <- (function() {
   }
   # not exported
 
-  match_var <- function(l_expr, expr_orig, check_assign = TRUE, acc = list()) {
+  match_var <- function(l_expr, expr_orig, is_head = FALSE, acc = list()) {
     # returns list of a result of matched and pairs of symbol and value
-    if (is.symbol(l_expr))
+    if (is.symbol(l_expr)) {
       if (has_wc(l_expr)) list(TRUE, acc)
+      else if (!is_head) list(TRUE, c(setNames(list(expr_orig), as.character(l_expr)), acc))
       else if (identical(l_expr, expr_orig)) list(TRUE, acc)
-      else if (check_assign) list(TRUE, c(setNames(list(expr_orig), as.character(l_expr)), acc))
-      else list(FALSE, NULL)
+      else list(FALSE, NULL) }
     else if (length(l_expr) != length(expr_orig)) list(FALSE, NULL)
-    else if (length(l_expr) == 0) list(identical(l_expr, expr_orig), acc) # for list(), NULL
+    else if (length(l_expr) == 0) list(identical(l_expr, expr_orig), acc) # for NULL
     else if (is.atomic(l_expr)) list(isTRUE(l_expr == expr_orig), acc) # absorbs difference of numeric and integer
     else if (is.recursive(l_expr) && is.recursive(expr_orig)) {
-      hd <- match_var(l_expr[[1]], expr_orig[[1]], check_assign, acc)
-      tl <- match_var(as.list(l_expr[-1]), as.list(expr_orig[-1]), check_assign, acc)
+      hd <- match_var(l_expr[[1]], expr_orig[[1]], is.call(l_expr) && is.symbol(l_expr[[1]]), acc)
+      tl <- match_var(as.list(l_expr[-1]), as.list(expr_orig[-1]), FALSE, acc)
       list(hd[[1]] && tl[[1]], c(hd[[2]], tl[[2]])) }
     else list(FALSE, NULL)
   }
