@@ -38,7 +38,7 @@ library(matchwith)
 ```
 
 ## Usage
-```
+```{r, eval=FALSE}
 # Syntax
 f <- function(expr) {
   match_with(expr
@@ -135,11 +135,14 @@ ex2(c(1L,2L,3L))
 ```
 
 # Guard clauses
-when `pattern_i` uses `Compare` family (or `!`, `any`, `all`,
-`identity`, `isTRUE`) or a function whose name starts with `is.` as top of
-node of language object, it is regarded as guard clauses, and when the
-result of evaluating `pattern_i` is TRUE, `res_i` will be evaluated
-and returned.
+when `pattern_i` uses `Compare` family (`r getGroupMembers("Compare")`)
+(or `!`, `any`, `all`, `identity`, `isTRUE`) or a function whose name
+starts with `is.` as a top node of language object, it is regarded as
+guard clauses, and when the result of evaluating `pattern_i` is TRUE,
+`res_i` will be evaluated and returned.  
+**Note that `r getGroupMembers("Logic")` possibly return vector of
+boolean object whose length may have more than 2, so all() or any() is
+required to use them.**
 ```{r}
 ex3 <- function(x)
   match_with(x
@@ -149,9 +152,19 @@ ex3 <- function(x)
   )
 sapply(1:10, ex3)
 
-# isTRUE(x > 5) -> FALSE, isTRUE(x < 2) -> FALSE, 
-# so only wildcard is matched and returns `-x`
-ex3(1:10) 
+# thanks to @Keiku #1
+ex4 <- function(x)
+  match_with(x
+  , all(1 <= x & x <= 10) -> "1-10"
+  , all(11 <= x)          -> "11+"
+  , otherwise        -> "other"
+  )
+ex4(1:10)
+ex4(8:12)
+ex4(11:14)
+ex4(5)
+ex4(15)
+ex4(-1)
 ```
 
   
