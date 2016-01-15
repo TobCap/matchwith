@@ -28,15 +28,17 @@ Supports
 Usage
 -----
 
-    # Syntax
-    f <- function(expr) {
-      match_with(expr
-      , pattern_1 -> res_1
-      , pattern_2 -> res_2
-                 ...
-      , pattern_n -> res_n
-      )
-    }
+``` r
+# Syntax
+f <- function(expr) {
+  match_with(expr
+  , pattern_1 -> res_1
+  , pattern_2 -> res_2
+             ...
+  , pattern_n -> res_n
+  )
+}
+```
 
 Const pattern
 =============
@@ -145,7 +147,8 @@ ex2(c(1L,2L,3L))
 Guard clauses
 =============
 
-when `pattern_i` uses `Compare` family (or `!`, `any`, `all`, `identity`, `isTRUE`) or a function whose name starts with `is.` as top of node of language object, it is regarded as guard clauses, and when the result of evaluating `pattern_i` is TRUE, `res_i` will be evaluated and returned.
+when `pattern_i` uses `Compare` family (==, &gt;, &lt;, !=, &lt;=, &gt;=) (or `!`, `any`, `all`, `identity`, `isTRUE`) or a function whose name starts with `is.` as a top node of language object, it is regarded as guard clauses, and when the result of evaluating `pattern_i` is TRUE, `res_i` will be evaluated and returned.
+**Note that &, | possibly return vector of boolean object whose length may have more than 2, so all() or any() is required to use them.**
 
 ``` r
 ex3 <- function(x)
@@ -157,8 +160,23 @@ ex3 <- function(x)
 sapply(1:10, ex3)
 #>  [1]   10   20   -3   -4   -5  600  700  800  900 1000
 
-# isTRUE(x > 5) -> FALSE, isTRUE(x < 2) -> FALSE, 
-# so only wildcard is matched and returns `-x`
-ex3(1:10) 
-#>  [1]  -1  -2  -3  -4  -5  -6  -7  -8  -9 -10
+# thanks to @Keiku #1
+ex4 <- function(x)
+  match_with(x
+  , all(1 <= x & x <= 10) -> "1-10"
+  , all(11 <= x)          -> "11+"
+  , otherwise        -> "other"
+  )
+ex4(1:10)
+#> [1] "1-10"
+ex4(8:12)
+#> [1] "other"
+ex4(11:14)
+#> [1] "11+"
+ex4(5)
+#> [1] "1-10"
+ex4(15)
+#> [1] "11+"
+ex4(-1)
+#> [1] "other"
 ```
