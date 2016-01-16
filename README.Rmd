@@ -152,12 +152,12 @@ ex3 <- function(x)
   )
 sapply(1:10, ex3)
 
-# thanks to @Keiku #1
+# thanks to @Keiku issue#1
 ex4 <- function(x)
   match_with(x
   , all(1 <= x & x <= 10) -> "1-10"
   , all(11 <= x)          -> "11+"
-  , otherwise        -> "other"
+  , otherwise             -> "other"
   )
 ex4(1:10)
 ex4(8:12)

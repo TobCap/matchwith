@@ -160,12 +160,12 @@ ex3 <- function(x)
 sapply(1:10, ex3)
 #>  [1]   10   20   -3   -4   -5  600  700  800  900 1000
 
-# thanks to @Keiku #1
+# thanks to @Keiku issue#1
 ex4 <- function(x)
   match_with(x
   , all(1 <= x & x <= 10) -> "1-10"
   , all(11 <= x)          -> "11+"
-  , otherwise        -> "other"
+  , otherwise             -> "other"
   )
 ex4(1:10)
 #> [1] "1-10"
