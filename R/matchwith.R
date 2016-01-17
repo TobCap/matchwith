@@ -127,7 +127,7 @@ match_with <- (function() {
   match_var <- function(l_expr, expr_orig, is_head = FALSE, acc = list()) {
     # returns list of a result of matched and pairs of symbol and value
     if (is.symbol(l_expr)) {
-      if (has_wc(l_expr)) list(TRUE, acc)
+      if (any(as.character(l_expr) %in% wildcards_char)) list(TRUE, acc)
       else if (!is_head) list(TRUE, c(setNames(list(expr_orig), as.character(l_expr)), acc))
       else if (identical(l_expr, expr_orig)) list(TRUE, acc)
       else list(FALSE, NULL) }
@@ -139,10 +139,6 @@ match_with <- (function() {
       tl <- match_var(as.list(l_expr[-1]), as.list(expr_orig[-1]), FALSE, acc)
       list(hd[[1]] && tl[[1]], c(hd[[2]], tl[[2]])) }
     else list(FALSE, NULL)
-  }
-
-  has_wc <- function(call_) {
-    any(all.vars(call_) %in% wildcards_char)
   }
 
   ## main
@@ -160,11 +156,14 @@ match_with <- (function() {
 
     for (i in seq_along(conds)) {
       statement <- conds[[i]]
-      if (missing(statement))
-        stop("need to remove the last comma")
 
-      if (statement[[1]] != quote(`<-`))
+      if (missing(statement)) {
+        stop("need to remove the last comma")
+      }
+
+      if (statement[[1]] != quote(`<-`)) {
         stop("use `->` as converter")
+      }
 
       l_expr <- statement[[3]]
       r_expr <- statement[[2]]
@@ -175,6 +174,7 @@ match_with <- (function() {
         return(eval(r_expr, ans_info$new_list, parent_frame))
       }
     }
+
     stop("The input is non-matched pattern. Need to write proper
             syntax or set default wildcard `.` at last.")
   }
