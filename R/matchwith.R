@@ -90,7 +90,6 @@ match_with <- (function() {
     getGroupMembers("Logic"), # for warning
     ls(pattern = "^is\\.", envir = baseenv())
     )
-  not_matched <- list(is_matched = FALSE, new_list = NULL)
 
    # extract_patterns
   check_matched <- function(expr_info, parent_frame, l_expr, r_expr) {
@@ -100,21 +99,12 @@ match_with <- (function() {
 
     # return list(is_matched = LGLSXP, new_list = VECSXP)
     if (cons_pattern) {
-      if (is.symbol(l_expr[[2]]) && is.symbol(l_expr[[3]]))  {
-        list(is_matched = TRUE, new_list = match_hdtl(expr_info$value, l_expr, r_expr))
-      } else {
-        stop("pattern of `x::xs` is only acceptable. `x::y::ys` is not supported")
-      }
-    } else if (is_guard) {
+      list(is_matched = TRUE, new_list = match_hdtl(expr_info$value, l_expr, r_expr))
+    } else if (is_guard && eval(l_expr, parent_frame)) {
       if (as.character(l_expr[[1]]) %in% c("|", "&")) {
         warning("`&` or `|` require to use all() or any()", domain = NA)
       }
-
-      if (eval(l_expr, parent_frame)) {
-        list(is_matched = TRUE, new_list = NULL)
-      } else {
-        list(is_matched = FALSE, new_list = NULL)
-      }
+      list(is_matched = TRUE, new_list = NULL)
     } else if ({.m <- match_var(l_expr, expr_info$value_deparse()); .m[[1]]}) {
       list(is_matched = TRUE, new_list = .m[[2]])
    } else {
@@ -123,6 +113,10 @@ match_with <- (function() {
   }
 
   match_hdtl <- function(expr_value, l_expr, r_expr) {
+    if (!(is.symbol(l_expr[[2]]) && is.symbol(l_expr[[3]]))) {
+      stop("pattern of `x::xs` is only acceptable. `x::y::ys` is not supported")
+    }
+
     `names<-`(
       list(expr_value[[1]], expr_value[-1]),
       list(as.character(l_expr[[2]]), as.character(l_expr[[3]]))
