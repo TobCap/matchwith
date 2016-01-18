@@ -96,14 +96,14 @@ match_with <- (function() {
     l_expr_len <- length(l_expr)
     cons_pattern <- l_expr_len == 3 && l_expr[[1]] == "::"
     is_guard <- l_expr_len > 1 && any(as.character(l_expr[[1]]) %in% bool_funs)
+    if (is_guard && as.character(l_expr[[1]]) %in% c("|", "&")) {
+      warning("`&` or `|` require to use all() or any()", domain = NA)
+    }
 
     # return list(is_matched = LGLSXP, new_list = VECSXP)
     if (cons_pattern) {
       list(is_matched = TRUE, new_list = match_hdtl(expr_info$value, l_expr, r_expr))
     } else if (is_guard && eval(l_expr, parent_frame)) {
-      if (as.character(l_expr[[1]]) %in% c("|", "&")) {
-        warning("`&` or `|` require to use all() or any()", domain = NA)
-      }
       list(is_matched = TRUE, new_list = NULL)
     } else if ({.m <- match_var(l_expr, expr_info$value_deparse()); .m[[1]]}) {
       list(is_matched = TRUE, new_list = .m[[2]])
