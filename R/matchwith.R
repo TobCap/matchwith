@@ -133,7 +133,8 @@ match_with <- (function() {
       else list(FALSE, NULL) }
     else if (length(l_expr) != length(expr_orig)) list(FALSE, NULL)
     else if (length(l_expr) == 0) list(identical(l_expr, expr_orig), acc) # for NULL
-    else if (is.atomic(l_expr)) list(isTRUE(l_expr == expr_orig), acc) # absorbs difference of numeric and integer
+    else if (is.atomic(l_expr) && is.numeric(l_expr) && is.numeric(expr_orig)) list(isTRUE(l_expr == expr_orig), acc) # absorbs difference of numeric and integer
+    else if (is.atomic(l_expr)) list(identical(l_expr, expr_orig), acc)
     else if (is.recursive(l_expr) && is.recursive(expr_orig)) {
       hd <- match_var(l_expr[[1]], expr_orig[[1]], is.call(l_expr) && is.symbol(l_expr[[1]]), acc)
       tl <- match_var(as.list(l_expr[-1]), as.list(expr_orig[-1]), FALSE, acc)
