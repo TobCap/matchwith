@@ -105,7 +105,7 @@ match_with <- (function() {
       list(is_matched = TRUE, new_list = match_hdtl(expr_info$expr_value_named[[1]], l_expr, r_expr))
     } else if (is_guard && isTRUE(eval(l_expr, expr_info$expr_value_named, parent_frame))) {
       list(is_matched = TRUE, new_list = NULL)
-    } else if ({.m <- match_var(l_expr, expr_info$expr_reparsed()); .m[[1]]}) {
+    } else if ({.m <- match_var(l_expr, expr_info$expr_reparsed); .m[[1]]}) {
       list(is_matched = TRUE, new_list = .m[[2]])
    } else {
       list(is_matched = FALSE, new_list = NULL)
@@ -152,10 +152,10 @@ match_with <- (function() {
 
     # This aims to identify the pre-parsed notation  like quote(1:3) and quote(c(1L, 2L, 3L))
     # Use delayedAssign() because parse() and deparse() take runtime costs
-    delayedAssign("expr_value_deparse", parse(text = deparse(expr_value))[[1]])
+    delayedAssign("expr_reparsed", parse(text = deparse(expr_value))[[1]])
 
     expr_info <- list(expr_value_named = expr_value_named,
-                      expr_reparsed = function() expr_value_deparse)
+                      expr_reparsed = expr_reparsed)
 
     for (i in seq_along(conds)) {
       statement <- conds[[i]]
