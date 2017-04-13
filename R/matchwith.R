@@ -102,23 +102,23 @@ match_with <- (function() {
 
     # return list(is_matched = LGLSXP, new_list = VECSXP)
     if (cons_pattern) {
-      list(is_matched = TRUE, new_list = match_hdtl(expr_info$value, l_expr, r_expr))
-    } else if (is_guard && eval(l_expr, parent_frame)) {
+      list(is_matched = TRUE, new_list = match_hdtl(expr_info$expr_value_named[[1]], l_expr, r_expr))
+    } else if (is_guard && isTRUE(eval(l_expr, expr_info$expr_value_named, parent_frame))) {
       list(is_matched = TRUE, new_list = NULL)
-    } else if ({.m <- match_var(l_expr, expr_info$value_deparse()); .m[[1]]}) {
+    } else if ({.m <- match_var(l_expr, expr_info$expr_reparsed()); .m[[1]]}) {
       list(is_matched = TRUE, new_list = .m[[2]])
    } else {
       list(is_matched = FALSE, new_list = NULL)
     }
   }
 
-  match_hdtl <- function(expr_value, l_expr, r_expr) {
+  match_hdtl <- function(val, l_expr, r_expr) {
     if (!(is.symbol(l_expr[[2]]) && is.symbol(l_expr[[3]]))) {
       stop("pattern of `x::xs` is only acceptable. `x::y::ys` is not supported")
     }
 
     `names<-`(
-      list(expr_value[[1]], expr_value[-1]),
+      list(val[[1]], val[-1]),
       list(as.character(l_expr[[2]]), as.character(l_expr[[3]]))
     )
   }
@@ -147,13 +147,15 @@ match_with <- (function() {
     dots <- as.vector(substitute((...)), "list")[-1]
     conds <- dots[-1]
     parent_frame <- parent.frame()
-    expr <- dots[[1]]
-    expr_value <- eval(expr, parent_frame)
-    # expr_name <- names(dots[1])
-    # expr_value_deparse <- parse(text = deparse(expr_value))[[1]]
+    expr_value <- eval(dots[[1]], parent_frame)
+    expr_value_named <- `names<-`(list(expr_value), names(dots[1]))
+
+    # This aims to identify the pre-parsed notation  like quote(1:3) and quote(c(1L, 2L, 3L))
+    # Use delayedAssign() because parse() and deparse() take runtime costs
     delayedAssign("expr_value_deparse", parse(text = deparse(expr_value))[[1]])
 
-    expr_info <- list(expr = expr, value = expr_value, value_deparse = function() expr_value_deparse)
+    expr_info <- list(expr_value_named = expr_value_named,
+                      expr_reparsed = function() expr_value_deparse)
 
     for (i in seq_along(conds)) {
       statement <- conds[[i]]

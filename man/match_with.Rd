@@ -2,6 +2,7 @@
 % Please edit documentation in R/matchwith.R
 \name{match_with}
 \alias{match_with}
+\alias{match_with}
 \title{Patern Matching for R}
 \usage{
 match_with(...)
@@ -89,4 +90,3 @@ len(c(10, 11, 12))
 len(list(10, 11, 12))
 }
 }
-
