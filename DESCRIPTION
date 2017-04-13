@@ -1,10 +1,11 @@
 Package: matchwith
 Type: Package
-Title: Pattern Matchihg for R
-Version: 0.0.2
+Title: Pattern Matching for R
+Version: 0.0.3
 Authors@R: person("tob", "", email = "tobakucapitalism@gmail.com",
   role = c("aut", "cre"))
-Description: Emulate Pattern Matching of Haskell and OCaml
+Description: Pattern matching like Haskell or OCaml.
+URL: https://github.com/TobCap/matchwith
 License: MIT + file LICENSE
 Suggests:
     testthat,
@@ -12,4 +13,4 @@ Suggests:
     rmarkdown
 VignetteBuilder: knitr
 LazyData: TRUE
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

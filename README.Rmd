@@ -55,7 +55,7 @@ f <- function(expr) {
 When x is matched with `pattern_i`, `res_i`
 (the right side of expression) is evalueted in the parent.frame .
 In the exampe below, when x is 0 or 1, the right side expression is evalated
-and returned. when x is more than 2, wildcard simbol is matched and
+and returned. when x is more than 1, wildcard simbol is matched and
 `fib(x-1) + fib(x-2)` is evaluated and returned.
 ```{r}
 fib <- function(x)
